@@ -4,13 +4,11 @@ import (
 	"github.com/ant0ine/go-json-rest/rest"
 	"log"
 	"net/http"
-	"database/sql"
-	_ "github.com/mattn/go-sqlite3"
 	"strings"
 	"encoding/json"
 )
 
-func main() {
+func InitAPI() {
 	api := rest.NewApi()
 	api.Use(rest.DefaultDevStack...)
 
@@ -27,9 +25,9 @@ func main() {
 				n[key] = flatString
 			}
 			log.Print(n)
-			jsonString,_ := json.Marshal(n)
+			jsonString,_ := json.Marshal(&n)
 			print(jsonString);
-			w.WriteJson(jsonString)
+			w.WriteJson(string(jsonString))
 			//w.WriteJson(readItems2);
 		}),
 	)
