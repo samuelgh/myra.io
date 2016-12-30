@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 	"encoding/json"
+	"fmt"
 )
 
 func InitAPI() {
@@ -13,22 +14,40 @@ func InitAPI() {
 	api.Use(rest.DefaultDevStack...)
 
 	router, err := rest.MakeRouter(
-		rest.Get("/message", func(w rest.ResponseWriter, req *rest.Request) {
-
-			//w.WriteJson(map[string]string{"Body": "Hello World!"})
+		rest.Get("/device/:name", func(w rest.ResponseWriter, req *rest.Request) {
+			name := req.PathParam("name")
 			n := make(map[string]string)
-
 			data := req.URL.Query()
 			for key, val := range data {
-				log.Print("key:" + key)
+				log.Println("key:" + key)
 				flatString := strings.Join(val,",")
 				n[key] = flatString
 			}
+			item := Item{}
+			err := item.FillStruct(n)
+			if err != nil {
+				fmt.Println(err)
+			}
+			result := Store(item,name)
+			fmt.Println(item)
 			log.Print(n)
 			jsonString,_ := json.Marshal(&n)
 			print(jsonString);
-			w.WriteJson(string(jsonString))
-			//w.WriteJson(readItems2);
+			w.WriteJson(result)
+		}),
+		rest.Get("/device/:name/all", func(w rest.ResponseWriter, req *rest.Request) {
+			id := req.PathParam("name")
+			meta := ReadMetaByName(id)
+			data := ReadByName(id)
+			result := ResultData{meta, data}
+			w.WriteJson(result)
+		}),
+		rest.Post("/device/:name", func(w rest.ResponseWriter, req *rest.Request) {
+			newItem := ItemMeta{}
+			req.DecodeJsonPayload(&newItem)
+			StoreMetaData(newItem)
+			CreateTableWithName(req.PathParam("name"))
+			w.WriteHeader(200)
 		}),
 	)
 	if err != nil {
